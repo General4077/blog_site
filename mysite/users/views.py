@@ -1,3 +1,53 @@
-from django.shortcuts import render
 
-# Create your views here.
+from http import HTTPStatus
+import json
+
+from django.contrib.auth import authenticate, login
+from django.contrib.auth.models import User
+from django.http import JsonResponse, HttpResponse, HttpResponseBadRequest
+from django.utils.decorators import method_decorator
+from django.views import View
+from django.views.decorators.csrf import csrf_exempt
+
+
+@method_decorator(csrf_exempt, name='dispatch') # TODO Fix this. DRF w/ JWT?
+class Register(View):
+
+    def post(self, request, *args, **kwargs):
+        data = json.loads(request.body)
+        try:
+            uname = data['username']
+            passwd = data['password']
+        except KeyError:
+            return JsonResponse({'message': f'Username and password are required!'}, status=HTTPStatus.BAD_REQUEST)
+        if User.objects.filter(username=uname):
+            return JsonResponse({'message': f'Username `{uname}` is not available!'}, status=HTTPStatus.BAD_REQUEST)
+        user = User(**data)
+        user.set_password(passwd)
+        user.save()
+        login(request, user)
+        return JsonResponse({'message': f"Welcome `{user.get_username()}`"})
+
+
+
+@method_decorator(csrf_exempt, name='dispatch')  # TODO Fix this. DRF w/ JWT?
+class Login(View):
+
+    
+    def post(self, request, *args, **kwargs):
+        data = json.loads(request.body)
+        try:
+            uname = data['username']
+            passwd = data['password']
+        except KeyError:
+            return JsonResponse({'message': f'Username and password are required!'}, status=HTTPStatus.BAD_REQUEST)
+        if not request.user.is_authenticated:
+            user = authenticate(username=uname, password=passwd)
+            if user:
+                login(request, user)
+                return JsonResponse({"message": f"Welcome `{user.get_username()}`!"})
+            else:
+                return JsonResponse({"message": "Your credientials don't match our records"}, status=HTTPStatus.UNAUTHORIZED)
+        else:
+            return JsonResponse({'message': 'You are already logged in!'})
+
