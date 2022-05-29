@@ -1,10 +1,10 @@
 
-from http import HTTPStatus
 import json
+from http import HTTPStatus
 
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
-from django.http import JsonResponse, HttpResponse, HttpResponseBadRequest
+from django.http import JsonResponse
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
@@ -51,3 +51,9 @@ class Login(View):
         else:
             return JsonResponse({'message': 'You are already logged in!'})
 
+@method_decorator(csrf_exempt, name='dispatch')  # TODO Fix this. DRF w/ JWT?
+class Logout(View):
+
+    def post(self, request, *args, **kwargs):
+        logout(request)
+        return JsonResponse({'message': "Logout Successful"})
