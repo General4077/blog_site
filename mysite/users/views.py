@@ -4,6 +4,7 @@ from http import HTTPStatus
 
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
+from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.utils.decorators import method_decorator
 from django.views import View
@@ -57,3 +58,11 @@ class Logout(View):
     def post(self, request, *args, **kwargs):
         logout(request)
         return JsonResponse({'message': "Logout Successful"})
+
+
+
+class Profile(View):
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        return JsonResponse({'username': user.get_username(), 'full_name': user.get_full_name()}) # TODO add user serializer
