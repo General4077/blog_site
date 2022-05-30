@@ -1,6 +1,7 @@
 import json
 from http import HTTPStatus
 
+from django.db import IntegrityError
 from django.http import JsonResponse
 from django.utils.decorators import method_decorator
 from django.views import View
@@ -22,6 +23,8 @@ class PostView(View):
             try:
                 Post(**json.loads(request.body), author=request.user).save()
                 return JsonResponse({'message': 'Post saved successfully'}, status=HTTPStatus.CREATED)
+            except IntegrityError:
+                return JsonResponse({'message': 'A post with that title already exists!'}, status=HTTPStatus.BAD_REQUEST)
             except Exception as e:
                 return JsonResponse({'message':'Invalid Request Data'}, status=HTTPStatus.BAD_REQUEST)
         else:
