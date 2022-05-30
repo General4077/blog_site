@@ -13,8 +13,11 @@ from .models import Post
 @method_decorator(csrf_exempt, name='dispatch') # TODO Fix this. DRF w/ JWT?
 class PostView(View):
 
-    def get(self, request, *args, **kwargs):
-        qs = Post.objects.values('title', 'content', 'author', 'date_posted')
+    def get(self, request, *args, id_=None, **kwargs):
+        if not id_:
+            qs = Post.objects.values('title', 'content', 'author', 'date_posted')
+        else:
+            qs = Post.objects.filter(pk=id_).values('title', 'content', 'author', 'date_posted')
         data = {'posts': list(qs)}
         return JsonResponse(data)
 
