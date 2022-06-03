@@ -52,4 +52,8 @@ class PostView(View):
         return JsonResponse({'message': 'Updated'}, status=HTTPStatus.ACCEPTED)
 
     def delete(self, request, *args, id_, **kwargs):
-        pass # TODO
+        post = Post.objects.filter(pk=id_).first()
+        if request.user.is_authenticated and (request.user.is_superuser or request.user == post.author):
+            post.delete()
+            return JsonResponse({'message': 'Deleted'}, status=HTTPStatus.ACCEPTED)
+        return JsonResponse({'message': 'Unauthorized'}, status=HTTPStatus.UNAUTHORIZED)
