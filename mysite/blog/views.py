@@ -15,17 +15,22 @@ from .models import Post
 @method_decorator(csrf_exempt, name='dispatch') # TODO Fix this. DRF w/ JWT?
 class PostView(View):
 
-    def get(self, request, *args, id_=None, **kwargs):
+    def get(self, request, *args, id_:int=None, username: str = None, user_id:int=None, **kwargs):
         paginate = bool(int(request.GET.get('paginate', 1)))
-        page_size = int(request.GET.get('page_size', 1))
+        page_size = int(request.GET.get('page_size', 10))
         page_offset = int(request.GET.get('page_offset', 1))
-        if not id_ and not paginate:
-            qs = Post.objects.order_by('date_posted')
-        elif not id_:
-            qs = Paginator(Post.objects.order_by('date_posted').all(), page_size).get_page(page_offset).object_list
+        filterables = {}
+        if id_:
+            filterables['pk'] = id_
+        if username:
+            filterables['author__username'] = username
+        if user_id:
+            filterables['author'] = user_id
+        if not paginate:
+            qs = Paginator(Post.objects.filter(**filterables).order_by('date_posted').all(), page_size).object_list
         else:
-            qs = Post.objects.filter(pk=id_)
-        data = {'posts': list(qs.values('title', 'content', 'author', 'date_posted', 'last_updated'))}
+            qs = Paginator(Post.objects.filter(**filterables).order_by('date_posted').all(), page_size).get_page(page_offset).object_list
+        data = {'posts': [d for d in qs.values('title', 'content', 'author', 'date_posted', 'last_updated', 'id')]}
         return JsonResponse(data)
 
     def post(self, request, *args, **kwargs):
