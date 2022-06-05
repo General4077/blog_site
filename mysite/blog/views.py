@@ -2,6 +2,7 @@ from datetime import datetime
 import json
 from http import HTTPStatus
 
+from django.core.paginator import Paginator
 from django.db import IntegrityError
 from django.http import JsonResponse
 from django.utils.decorators import method_decorator
@@ -15,11 +16,16 @@ from .models import Post
 class PostView(View):
 
     def get(self, request, *args, id_=None, **kwargs):
-        if not id_:
-            qs = Post.objects.order_by('date_posted').values('title', 'content', 'author', 'date_posted', 'last_updated')
+        paginate = bool(int(request.GET.get('paginate', 1)))
+        page_size = int(request.GET.get('page_size', 1))
+        page_offset = int(request.GET.get('page_offset', 1))
+        if not id_ and not paginate:
+            qs = Post.objects.order_by('date_posted')
+        elif not id_:
+            qs = Paginator(Post.objects.order_by('date_posted').all(), page_size).get_page(page_offset).object_list
         else:
-            qs = Post.objects.filter(pk=id_).values('title', 'content', 'author', 'date_posted', 'last_updated')
-        data = {'posts': list(qs)}
+            qs = Post.objects.filter(pk=id_)
+        data = {'posts': list(qs.values('title', 'content', 'author', 'date_posted', 'last_updated'))}
         return JsonResponse(data)
 
     def post(self, request, *args, **kwargs):
